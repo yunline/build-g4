@@ -1,0 +1,27 @@
+name: Windows VS Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on Windows
+    runs-on: windows-latest
+    
+    steps:
+      - name: Setup Visual Studio tools
+        uses: microsoft/setup-msbuild@v2
+        with:
+          vs-version: 'latest'
+
+      - name: Setup Visual Studio Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Display Visual Studio info
+        shell: cmd
+        run: |
+          cl 2>&1 | findstr /C:"Version"
+          echo MSBuild version:
+          msbuild -version
