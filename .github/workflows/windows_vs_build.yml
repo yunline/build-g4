@@ -25,3 +25,53 @@ jobs:
           cl 2>&1 | findstr /C:"Version"
           echo MSBuild version:
           msbuild -version
+      
+      - name: Checkout Xerces-C
+        uses: actions/checkout@v4
+        with:
+          repository: apache/xerces-c
+          ref: v3.3.0
+          path: xerces-c-source
+      
+      - name: Build Xerces-C
+        shell: cmd
+        run: |
+          mkdir xerces-c-build
+          cd xerces-c-build
+          cmake "..\xerces-c-source" ^
+            -DCMAKE_INSTALL_PREFIX="..\install" ^
+            -DCMAKE_CXX_FLAGS_RELEASE="/MT /MP4" ^
+            -DBUILD_SHARED_LIBS=OFF
+          cmake --build . --config Release
+          cmake --install .
+          cd ..\
+      
+      - name: Checkout Geant4
+        uses: actions/checkout@v4
+        with:
+          repository: Geant4/geant4
+          ref: v11.4.0
+          path: geant4-source
+      
+      - name: Build Gent4
+        shell: cmd
+        run: |
+          mkdir geant4-build
+          cd geant4-build
+          cmake "..\geant4-source" ^
+            -DCMAKE_INSTALL_PREFIX="..\install" ^
+            -DBUILD_STATIC_LIBS=ON ^
+            -DBUILD_SHARED_LIBS=OFF ^
+            -DGEANT4_INSTALL_EXAMPLES=OFF ^
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded ^
+            -DGEANT4_BUILD_MSVC_MP=ON ^
+            -DCMAKE_CXX_FLAGS_RELEASE="/MT /MP4" ^
+            -DGEANT4_USE_OPENGL_WIN32=ON ^
+            -DGEANT4_USE_GDML=ON
+          cmake --build . --config Release --target install
+      
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: install
+          path: ./install
