@@ -26,12 +26,32 @@ jobs:
           echo MSBuild version:
           msbuild -version
       
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11' 
+      
       - name: Checkout Xerces-C
         uses: actions/checkout@v4
         with:
           repository: apache/xerces-c
           ref: v3.3.0
           path: xerces-c-source
+
+      - name: Checkout Geant4
+        uses: actions/checkout@v4
+        with:
+          repository: Geant4/geant4
+          ref: v11.4.0
+          path: geant4-source
+      
+      - name: Checkout Geant4 Pybind
+        uses: actions/checkout@v4
+        with:
+          repository: HaarigerHarald/geant4_pybind
+          ref: v0.1.2
+          path: geant4-pybind-source
+          submodules: recursive
       
       - name: Build Xerces-C
         shell: cmd
@@ -40,18 +60,12 @@ jobs:
           cd xerces-c-build
           cmake "..\xerces-c-source" ^
             -DCMAKE_INSTALL_PREFIX="..\install" ^
-            -DCMAKE_CXX_FLAGS_RELEASE="/MT /MP4" ^
+            -DCMAKE_CXX_FLAGS_RELEASE="/MP4" ^
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded ^
             -DBUILD_SHARED_LIBS=OFF
           cmake --build . --config Release
           cmake --install .
           cd ..\
-      
-      - name: Checkout Geant4
-        uses: actions/checkout@v4
-        with:
-          repository: Geant4/geant4
-          ref: v11.4.0
-          path: geant4-source
       
       - name: Build Gent4
         shell: cmd
@@ -63,15 +77,32 @@ jobs:
             -DBUILD_STATIC_LIBS=ON ^
             -DBUILD_SHARED_LIBS=OFF ^
             -DGEANT4_INSTALL_EXAMPLES=OFF ^
-            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded ^
             -DGEANT4_BUILD_MSVC_MP=ON ^
-            -DCMAKE_CXX_FLAGS_RELEASE="/MT /MP4" ^
+            -DCMAKE_CXX_FLAGS_RELEASE="/MP4" ^
             -DGEANT4_USE_OPENGL_WIN32=ON ^
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded ^
             -DGEANT4_USE_GDML=ON
           cmake --build . --config Release --target install
+          cd ..\
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: install
           path: ./install
+      
+      - name: Build Gent4 Pybind
+        env:
+          CMAKE_ARGS: >-
+            -DCMAKE_PREFIX_PATH=${{ github.workspace }}\install
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+        shell: cmd
+        run: |
+          call .\install\bin\geant4.bat
+          pip wheel .\geant4-pybind-source -w .\wheelhouse
+      
+      - name: Upload Wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel
+          path: ./wheelhouse
