@@ -19,18 +19,11 @@ jobs:
         with:
           arch: x64
 
-      - name: Display Visual Studio info
-        shell: cmd
-        run: |
-          cl 2>&1 | findstr /C:"Version"
-          echo MSBuild version:
-          msbuild -version
-      
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.11' 
-      
+
       - name: Checkout Xerces-C
         uses: actions/checkout@v4
         with:
@@ -65,8 +58,7 @@ jobs:
             -DBUILD_SHARED_LIBS=OFF
           cmake --build . --config Release
           cmake --install .
-          cd ..\
-      
+
       - name: Build Gent4
         shell: cmd
         run: |
@@ -83,13 +75,6 @@ jobs:
             -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded ^
             -DGEANT4_USE_GDML=ON
           cmake --build . --config Release --target install
-          cd ..\
-      
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: install
-          path: ./install
       
       - name: Build Gent4 Pybind
         env:
@@ -100,7 +85,7 @@ jobs:
         run: |
           call .\install\bin\geant4.bat
           pip wheel .\geant4-pybind-source -w .\wheelhouse
-      
+
       - name: Upload Wheel
         uses: actions/upload-artifact@v4
         with:
