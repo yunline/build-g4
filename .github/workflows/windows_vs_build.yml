@@ -2,6 +2,12 @@ name: Windows VS Build
 
 on:
   workflow_dispatch:
+    inputs:
+      geant4_pybind_ref:
+        description: 'Geant4 Pybind Version (tag or commit-id)'
+        required: false
+        default: 'v0.1.2'
+        type: string
 
 jobs:
   build:
@@ -42,7 +48,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: HaarigerHarald/geant4_pybind
-          ref: v0.1.2
+          ref: ${{ inputs.geant4_pybind_ref }}
           path: geant4-pybind-source
           submodules: recursive
       
